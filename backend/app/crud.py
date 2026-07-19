@@ -1,7 +1,12 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_
 from app import models
+
+RUNNING_WORKOUT_TYPES = [
+    "easy_run", "tempo_run", "interval", "hill_repeats",
+    "long_run", "progression_run", "recovery_run",
+]
 
 
 # --- Workouts ---
@@ -59,7 +64,7 @@ def update_workout(db: Session, workout_id: int, workout_data):
 
     if workout_data.run_details is not None:
         if db_workout.run_details:
-            for key, value in workout_data.run_details.model_dump().items():
+            for key, value in workout_data.run_details.model_dump(exclude_unset=True).items():
                 setattr(db_workout.run_details, key, value)
         else:
             run_detail = models.RunDetail(
@@ -89,7 +94,7 @@ def complete_workout(db: Session, workout_id: int):
     if not db_workout:
         return None
     db_workout.completed = True
-    db_workout.completed_at = datetime.utcnow()
+    db_workout.completed_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(db_workout)
 
@@ -110,7 +115,7 @@ def _check_running_prs(db: Session, workout):
         try:
             parts = rd.actual_pace.split(":")
             pace_val = float(parts[0]) + float(parts[1]) / 60
-            check_and_create_pr(db, "fastest_pace", round(pace_val, 2), "min/km", workout.date)
+            check_and_create_pr(db, "fastest_pace", round(pace_val, 2), "min/km", workout.date, lower_is_better=True)
         except (ValueError, IndexError):
             pass
     # Weekly mileage PR is checked via stats
@@ -143,10 +148,7 @@ def _get_current_week_distance(db: Session, ref_date):
         models.Workout.date >= week_start,
         models.Workout.date <= week_end,
         models.Workout.completed == True,
-        models.Workout.workout_type.in_([
-            "easy_run", "tempo_run", "interval", "hill_repeats",
-            "long_run", "progression_run", "recovery_run"
-        ])
+        models.Workout.workout_type.in_(RUNNING_WORKOUT_TYPES)
     ).all()
     total = 0.0
     for r in runs:
@@ -276,10 +278,10 @@ def create_personal_record(db: Session, pr_data):
     return db_pr
 
 
-def check_and_create_pr(db: Session, category: str, value: float, unit: str = None, achieved_at: date = None):
+def check_and_create_pr(db: Session, category: str, value: float, unit: str = None, achieved_at: date = None, lower_is_better: bool = False):
     existing = get_best_record(db, category)
     is_new = False
-    if existing is None or value > existing.value:
+    if existing is None or (lower_is_better and value < existing.value) or (not lower_is_better and value > existing.value):
         pr = models.PersonalRecord(
             category=category,
             value=value,
@@ -401,10 +403,7 @@ def get_dashboard_stats(db: Session):
 
 def get_running_stats(db: Session):
     all_runs = db.query(models.Workout).filter(
-        models.Workout.workout_type.in_([
-            "easy_run", "tempo_run", "interval", "hill_repeats",
-            "long_run", "progression_run", "recovery_run"
-        ]),
+        models.Workout.workout_type.in_(RUNNING_WORKOUT_TYPES),
         models.Workout.completed == True
     ).all()
 
@@ -426,11 +425,21 @@ def get_running_stats(db: Session):
     streak = _calculate_streak(db)
     best_streak = _calculate_best_streak(db)
 
+    if paces:
+        total_seconds = 0
+        for p in paces:
+            parts = p.split(":")
+            total_seconds += int(parts[0]) * 60 + int(parts[1])
+        avg_seconds = total_seconds / len(paces)
+        avg_pace = f"{int(avg_seconds // 60)}:{int(avg_seconds % 60):02d}"
+    else:
+        avg_pace = None
+
     return {
         "total_distance": round(total_distance, 2),
         "total_runs": len(all_runs),
         "total_running_time": total_time,
-        "average_pace": paces[-1] if paces else None,
+        "average_pace": avg_pace,
         "longest_run": longest_run if longest_run > 0 else None,
         "best_weekly_km": _best_weekly_km(db),
         "current_streak": streak,
@@ -489,10 +498,11 @@ def _calculate_best_streak(db: Session):
     if not all_completed:
         return 0
 
+    unique_dates = sorted(set(w.date for w in all_completed))
     best = 0
     current = 1
-    for i in range(1, len(all_completed)):
-        if all_completed[i].date == all_completed[i - 1].date + timedelta(days=1):
+    for i in range(1, len(unique_dates)):
+        if unique_dates[i] == unique_dates[i - 1] + timedelta(days=1):
             current += 1
         else:
             best = max(best, current)
@@ -502,10 +512,7 @@ def _calculate_best_streak(db: Session):
 
 def _best_weekly_km(db: Session):
     all_runs = db.query(models.Workout).filter(
-        models.Workout.workout_type.in_([
-            "easy_run", "tempo_run", "interval", "hill_repeats",
-            "long_run", "progression_run", "recovery_run"
-        ]),
+        models.Workout.workout_type.in_(RUNNING_WORKOUT_TYPES),
         models.Workout.completed == True
     ).order_by(models.Workout.date).all()
 
@@ -514,9 +521,8 @@ def _best_weekly_km(db: Session):
 
     weekly_distances = {}
     for run in all_runs:
-        week_key = run.date.isocalendar()[1]
-        year_key = run.date.year
-        key = f"{year_key}-{week_key}"
+        iso_year, week_key, _ = run.date.isocalendar()
+        key = f"{iso_year}-{week_key}"
         if key not in weekly_distances:
             weekly_distances[key] = 0.0
         if run.run_details and run.run_details.distance:

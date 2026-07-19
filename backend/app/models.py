@@ -1,5 +1,5 @@
 import enum
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, Date, DateTime,
     Enum, ForeignKey, Text
@@ -34,8 +34,8 @@ class Workout(Base):
     completed_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     estimated_duration = Column(Integer, nullable=True)  # minutes
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     run_details = relationship("RunDetail", back_populates="workout", uselist=False, cascade="all, delete-orphan")
     strength_details = relationship("StrengthDetail", back_populates="workout", cascade="all, delete-orphan")
@@ -83,7 +83,7 @@ class WorkoutTemplate(Base):
     cooldown = Column(Text, nullable=True)
     target_pace = Column(String(20), nullable=True)
     estimated_duration = Column(Integer, nullable=True)  # minutes
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class StrengthTemplate(Base):
@@ -93,7 +93,7 @@ class StrengthTemplate(Base):
     name = Column(String(255), nullable=False)
     template_type = Column(String(50), nullable=False)  # A, B, C
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     exercises = relationship("StrengthTemplateExercise", back_populates="template", cascade="all, delete-orphan")
 
@@ -123,8 +123,9 @@ class TrainingPlan(Base):
     fitness_level = Column(String(50), nullable=True)  # beginner, intermediate, advanced
     training_days = Column(Integer, nullable=True)
     strength_sessions = Column(Integer, nullable=True)
+    start_day = Column(Integer, nullable=True, default=0)  # 0=Mon, 1=Tue, ..., 6=Sun
     active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class PersonalRecord(Base):
@@ -135,7 +136,7 @@ class PersonalRecord(Base):
     value = Column(Float, nullable=False)
     unit = Column(String(20), nullable=True)  # min, kg, km
     achieved_at = Column(Date, default=date.today)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class RecoveryLog(Base):
@@ -149,4 +150,4 @@ class RecoveryLog(Base):
     stress_level = Column(Integer, nullable=True)  # 1-10
     recovery_score = Column(Float, nullable=True)  # calculated 0-100
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { GOAL_LABELS } from '../types';
 
+const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 export default function PlanGenerator() {
   const [form, setForm] = useState({
     goal: 'half_marathon',
@@ -12,6 +14,7 @@ export default function PlanGenerator() {
     fitness_level: 'intermediate',
     training_days: '5',
     strength_sessions: '2',
+    start_day: '0',
   });
   const [generating, setGenerating] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -28,11 +31,15 @@ export default function PlanGenerator() {
         fitness_level: form.fitness_level,
         training_days: parseInt(form.training_days),
         strength_sessions: parseInt(form.strength_sessions),
+        start_day: parseInt(form.start_day),
       });
       const weeks = Math.max(1, Math.round((new Date(form.end_date).getTime() - new Date(form.start_date).getTime()) / (7 * 86400000)));
       setWorkoutCount(weeks * parseInt(form.training_days));
       setSuccess(true);
-    } catch { alert('Failed to create plan'); }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create plan';
+      alert(message);
+    }
     finally { setGenerating(false); }
   };
 
@@ -48,7 +55,7 @@ export default function PlanGenerator() {
             {workoutCount} workouts generated for your {GOAL_LABELS[form.goal]} plan
           </p>
           <p className="text-sm text-gray-400 mb-6">
-            {form.start_date} &rarr; {form.end_date}
+            {form.start_date} &rarr; {form.end_date} &middot; Starting on {DAY_LABELS[parseInt(form.start_day)]}s
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/calendar" className="btn-primary">
@@ -106,7 +113,7 @@ export default function PlanGenerator() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="label">Training Days/Week</label>
               <select className="input" value={form.training_days} onChange={(e) => setForm({ ...form, training_days: e.target.value })}>
@@ -117,6 +124,12 @@ export default function PlanGenerator() {
               <label className="label">Strength Sessions/Week</label>
               <select className="input" value={form.strength_sessions} onChange={(e) => setForm({ ...form, strength_sessions: e.target.value })}>
                 {[0, 1, 2, 3, 4].map(s => <option key={s} value={s}>{s} sessions</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">First Training Day</label>
+              <select className="input" value={form.start_day} onChange={(e) => setForm({ ...form, start_day: e.target.value })}>
+                {DAY_LABELS.map((day, i) => <option key={i} value={i}>{day}</option>)}
               </select>
             </div>
           </div>

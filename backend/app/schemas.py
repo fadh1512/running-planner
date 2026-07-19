@@ -160,6 +160,7 @@ class TrainingPlanBase(BaseModel):
     fitness_level: Optional[str] = None
     training_days: Optional[int] = None
     strength_sessions: Optional[int] = None
+    start_day: Optional[int] = None  # 0=Mon, 1=Tue, ..., 6=Sun
 
 
 class TrainingPlanCreate(TrainingPlanBase):

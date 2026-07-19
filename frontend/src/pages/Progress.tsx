@@ -21,8 +21,12 @@ export default function Progress() {
 
   const weeklyData: Record<string, number> = {};
   completedRuns.forEach(w => {
-    const d = new Date(w.date);
-    const key = `${d.getFullYear()}-W${String(Math.ceil((d.getDate() + new Date(d.getFullYear(), 0, 1).getDay()) / 7)).padStart(2, '0')}`;
+    const d = new Date(w.date + 'T00:00:00');
+    const target = new Date(d);
+    target.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const week1 = new Date(target.getFullYear(), 0, 4);
+    const weekNum = 1 + Math.ceil(((target.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    const key = `${target.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
     weeklyData[key] = (weeklyData[key] || 0) + (w.run_details?.distance || 0);
   });
   const weeklyEntries = Object.entries(weeklyData).slice(-12).map(([week, distance]) => ({ week, distance: Math.round(distance * 10) / 10 }));

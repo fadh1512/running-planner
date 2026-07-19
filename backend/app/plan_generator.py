@@ -1,6 +1,7 @@
+import math
 from datetime import date, timedelta
 from sqlalchemy.orm import Session
-from app import models, crud
+from app import models
 
 
 def generate_workouts_for_plan(db: Session, plan: models.TrainingPlan):
@@ -12,12 +13,10 @@ def generate_workouts_for_plan(db: Session, plan: models.TrainingPlan):
     strength_sessions = plan.strength_sessions or 2
     fitness = plan.fitness_level or "intermediate"
     base_km = plan.current_weekly_km or 20
+    start_day = plan.start_day or 0  # 0=Mon, 6=Sun
 
-    total_weeks = max(1, (end - start).days // 7)
+    total_weeks = max(1, math.ceil((end - start).days / 7))
 
-    strength_types = ["strength_a", "strength_b", "strength_c"]
-
-    # Goal-specific long run distances (km) that scale with weeks
     long_run_targets = {
         "5k": {"beginner": 8, "intermediate": 10, "advanced": 12},
         "10k": {"beginner": 12, "intermediate": 15, "advanced": 18},
@@ -25,7 +24,6 @@ def generate_workouts_for_plan(db: Session, plan: models.TrainingPlan):
         "marathon": {"beginner": 24, "intermediate": 30, "advanced": 35},
     }
 
-    # Goal-specific easy run distances
     easy_run_km = {
         "5k": {"beginner": 3, "intermediate": 5, "advanced": 6},
         "10k": {"beginner": 5, "intermediate": 6, "advanced": 8},
@@ -36,16 +34,14 @@ def generate_workouts_for_plan(db: Session, plan: models.TrainingPlan):
     target_long = long_run_targets.get(goal, {}).get(fitness, 15)
     target_easy = easy_run_km.get(goal, {}).get(fitness, 5)
 
-    # Intensity distribution across the week
-    # Pattern: Mon=Easy, Tue=Speed, Wed=Easy/Strength, Thu=Tempo, Fri=Rest/Strength, Sat=Long, Sun=Recovery
-    day_types = _build_weekly_pattern(training_days, strength_sessions)
+    day_types = _build_weekly_pattern(training_days, strength_sessions, start_day)
 
     current_date = start
     week_num = 0
 
     while current_date <= end and week_num < total_weeks:
-        progress = week_num / max(1, total_weeks - 1)  # 0 to 1
-        is_taper = week_num >= total_weeks - 2  # last 2 weeks are taper
+        progress = week_num / max(1, total_weeks - 1)
+        is_taper = week_num >= total_weeks - 2
 
         for day_offset, workout_type in day_types:
             workout_date = current_date + timedelta(days=day_offset)
@@ -54,7 +50,7 @@ def generate_workouts_for_plan(db: Session, plan: models.TrainingPlan):
 
             workout = _create_workout_for_day(
                 db, plan, workout_date, workout_type, week_num,
-                progress, is_taper, target_long, target_easy, strength_types
+                progress, is_taper, target_long, target_easy
             )
             if workout:
                 db.add(workout)
@@ -65,75 +61,61 @@ def generate_workouts_for_plan(db: Session, plan: models.TrainingPlan):
     db.commit()
 
 
-def _build_weekly_pattern(training_days, strength_sessions):
-    """Build a weekly pattern of workout types."""
-    all_days = []
+def _build_weekly_pattern(training_days, strength_sessions, start_day=0):
+    """Build a weekly pattern of workout types, offset by start_day.
 
+    start_day: 0=Monday, 1=Tuesday, ..., 6=Sunday
+    The pattern offsets are relative to the start of each week (Monday=0).
+    We subtract start_day so the first training day falls on the chosen day.
+    """
     if training_days >= 7:
-        all_days = [
-            (0, "easy_run"),
-            (1, "interval"),
-            (2, "strength_a"),
-            (3, "tempo_run"),
-            (4, "strength_b"),
-            (5, "long_run"),
-            (6, "recovery_run"),
-        ]
+        base = [
+            ("easy_run", "interval", "strength_a", "tempo_run", "strength_b", "long_run", "recovery_run"),
+        ][0]
+        raw = list(enumerate(base))
     elif training_days >= 6:
-        all_days = [
-            (0, "easy_run"),
-            (1, "interval"),
-            (2, "strength_a"),
-            (3, "tempo_run"),
-            (4, "strength_b"),
-            (5, "long_run"),
+        raw = [
+            (0, "easy_run"), (1, "interval"), (2, "strength_a"),
+            (3, "tempo_run"), (4, "strength_b"), (5, "long_run"),
         ]
     elif training_days >= 5:
-        all_days = [
-            (0, "easy_run"),
-            (1, "interval"),
-            (2, "strength_a"),
-            (3, "tempo_run"),
-            (4, "long_run"),
+        raw = [
+            (0, "easy_run"), (1, "interval"), (2, "strength_a"),
+            (3, "tempo_run"), (4, "long_run"),
         ]
     elif training_days >= 4:
-        all_days = [
-            (0, "easy_run"),
-            (1, "interval"),
-            (2, "tempo_run"),
-            (3, "long_run"),
+        raw = [
+            (0, "easy_run"), (1, "interval"), (2, "tempo_run"), (3, "long_run"),
         ]
     else:
-        all_days = [
-            (0, "easy_run"),
-            (1, "interval"),
-            (2, "long_run"),
+        raw = [
+            (0, "easy_run"), (1, "interval"), (2, "long_run"),
         ]
 
-    # Replace some easy runs with strength if needed
-    if strength_sessions >= 2 and len(all_days) > 3:
-        all_days[2] = (all_days[2][0], "strength_a")
-        if strength_sessions >= 3 and len(all_days) > 4:
-            # Don't replace the long run or speed day
-            for i in [1, 3]:
-                if i < len(all_days) and all_days[i][1] == "easy_run":
-                    all_days[i] = (all_days[i][0], "strength_b")
-                    break
-    elif strength_sessions == 1 and len(all_days) > 2:
-        all_days[2] = (all_days[2][0], "strength_a")
+    # Adjust offsets relative to start_day
+    all_days = [((offset - start_day) % 7, wtype) for offset, wtype in raw]
+
+    # Place strength sessions by replacing easy_run slots (never replace long_run or interval)
+    if strength_sessions > 0:
+        strength_placed = 0
+        strength_names = ["strength_a", "strength_b", "strength_c"]
+        for i, (day_off, wtype) in enumerate(all_days):
+            if strength_placed >= strength_sessions:
+                break
+            if wtype == "easy_run":
+                all_days[i] = (day_off, strength_names[strength_placed])
+                strength_placed += 1
 
     return all_days
 
 
 def _create_workout_for_day(db, plan, workout_date, workout_type, week_num,
-                             progress, is_taper, target_long, target_easy,
-                             strength_types):
+                             progress, is_taper, target_long, target_easy):
     """Create a single workout entry."""
 
-    # Calculate progressive distance
-    progress_multiplier = 0.7 + (progress * 0.3)  # 70% to 100%
+    progress_multiplier = 0.7 + (progress * 0.3)
     if is_taper:
-        progress_multiplier = 0.6  # reduce in taper
+        progress_multiplier = 0.6
 
     if workout_type == "rest_day":
         return models.Workout(
@@ -144,7 +126,6 @@ def _create_workout_for_day(db, plan, workout_date, workout_type, week_num,
         )
 
     if workout_type.startswith("strength"):
-        strength_idx = ord(workout_type[-1]) - ord("a")
         duration = 45 if not is_taper else 30
         return models.Workout(
             title=f"Strength Session - {workout_type.replace('_', ' ').title()}",
@@ -153,7 +134,6 @@ def _create_workout_for_day(db, plan, workout_date, workout_type, week_num,
             estimated_duration=duration,
         )
 
-    # Running workouts
     distance = None
     pace = None
     duration = None
@@ -162,14 +142,14 @@ def _create_workout_for_day(db, plan, workout_date, workout_type, week_num,
     if workout_type == "easy_run":
         dist = round(target_easy * progress_multiplier, 1)
         distance = dist
-        duration = int(dist * 6)  # ~6 min/km
+        duration = int(dist * 6)
         pace = "6:00"
         title = f"Easy Run - {dist} km"
 
     elif workout_type == "tempo_run":
         dist = round(target_easy * 0.8 * progress_multiplier, 1)
         distance = dist
-        duration = int(dist * 5)  # ~5 min/km
+        duration = int(dist * 5)
         pace = "5:00"
         title = f"Tempo Run - {dist} km"
 
@@ -222,7 +202,6 @@ def _create_workout_for_day(db, plan, workout_date, workout_type, week_num,
         estimated_duration=duration,
     )
 
-    # Add run details
     workout.run_details = models.RunDetail(
         distance=distance,
         target_pace=pace,

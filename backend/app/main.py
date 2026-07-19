@@ -1,11 +1,44 @@
 import os
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, SessionLocal, Base
 from app.routers import workouts, templates, plans, recovery, stats, records
 from app.crud import seed_default_templates
 
-app = FastAPI(title="Running Planner API", version="1.0.0")
+logger = logging.getLogger(__name__)
+
+
+def _run_migrations():
+    """Add missing columns to existing tables."""
+    with engine.connect() as conn:
+        try:
+            conn.execute(
+                __import__('sqlalchemy').text(
+                    "ALTER TABLE training_plans ADD COLUMN IF NOT EXISTS start_day INTEGER DEFAULT 0"
+                )
+            )
+            conn.commit()
+        except Exception as e:
+            logger.warning("Migration skipped: %s", e)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    _run_migrations()
+    db = SessionLocal()
+    try:
+        seed_default_templates(db)
+    except Exception as e:
+        logger.warning("Failed to seed default templates: %s", e)
+    finally:
+        db.close()
+    yield
+
+
+app = FastAPI(title="Running Planner API", version="1.0.0", lifespan=lifespan)
 
 ALLOWED_ORIGINS = [
     origin.strip()
@@ -29,16 +62,6 @@ app.include_router(plans.router)
 app.include_router(recovery.router)
 app.include_router(stats.router)
 app.include_router(records.router)
-
-
-@app.on_event("startup")
-def startup():
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_default_templates(db)
-    finally:
-        db.close()
 
 
 @app.get("/api/health")

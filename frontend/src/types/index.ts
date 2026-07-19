@@ -76,6 +76,7 @@ export interface TrainingPlan {
   fitness_level: string | null;
   training_days: number | null;
   strength_sessions: number | null;
+  start_day: number | null;
   active: boolean;
   created_at: string;
 }
