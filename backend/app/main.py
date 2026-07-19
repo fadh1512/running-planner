@@ -23,6 +23,16 @@ def _run_migrations():
         except Exception as e:
             logger.warning("Migration skipped: %s", e)
 
+        try:
+            conn.execute(
+                __import__('sqlalchemy').text(
+                    "ALTER TABLE workouts ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES training_plans(id) ON DELETE SET NULL"
+                )
+            )
+            conn.commit()
+        except Exception as e:
+            logger.warning("Migration skipped: %s", e)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

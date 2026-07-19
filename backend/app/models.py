@@ -20,6 +20,10 @@ class WorkoutTypeEnum(str, enum.Enum):
     STRENGTH_B = "strength_b"
     STRENGTH_C = "strength_c"
     REST_DAY = "rest_day"
+    CROSS_TRAIN = "cross_train"
+    YOGA = "yoga"
+    SWIM = "swim"
+    BIKE = "bike"
     CUSTOM = "custom"
 
 
@@ -37,8 +41,11 @@ class Workout(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+    plan_id = Column(Integer, ForeignKey("training_plans.id", ondelete="SET NULL"), nullable=True)
+
     run_details = relationship("RunDetail", back_populates="workout", uselist=False, cascade="all, delete-orphan")
     strength_details = relationship("StrengthDetail", back_populates="workout", cascade="all, delete-orphan")
+    plan = relationship("TrainingPlan", back_populates="workouts")
 
 
 class RunDetail(Base):
@@ -126,6 +133,8 @@ class TrainingPlan(Base):
     start_day = Column(Integer, nullable=True, default=0)  # 0=Mon, 1=Tue, ..., 6=Sun
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    workouts = relationship("Workout", back_populates="plan")
 
 
 class PersonalRecord(Base):

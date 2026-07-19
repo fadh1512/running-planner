@@ -10,6 +10,7 @@ export default function Calendar() {
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [activePlan, setActivePlan] = useState<any>(null);
   const calendarRef = useRef<any>(null);
 
   const loadWorkouts = (fetchInfo?: any) => {
@@ -18,13 +19,13 @@ export default function Calendar() {
     api.getWorkouts(start, end).then(setWorkouts);
   };
 
-  useEffect(() => { loadWorkouts(); }, []);
+  useEffect(() => { loadWorkouts(); api.getActivePlan().then(setActivePlan).catch(() => {}); }, []);
 
   const events = workouts.map((w) => ({
     id: w.id.toString(),
-    title: w.title,
+    title: w.plan_id ? `🎯 ${w.title}` : w.title,
     date: w.date,
-    backgroundColor: w.completed ? '#10b981' : WORKOUT_TYPE_COLORS[w.workout_type] || '#6b7280',
+    backgroundColor: w.completed ? '#6366f1' : WORKOUT_TYPE_COLORS[w.workout_type] || '#6b7280',
     borderColor: 'transparent',
     textColor: '#fff',
     extendedProps: { workout: w },
@@ -73,6 +74,12 @@ export default function Calendar() {
       </div>
 
       {/* Legend */}
+      {activePlan && (
+        <div className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-xl text-sm font-medium">
+          <span className="text-lg">🎯</span>
+          Active Plan: {activePlan.goal === '5k' ? '5K' : activePlan.goal === '10k' ? '10K' : activePlan.goal === 'half_marathon' ? 'Half Marathon' : 'Marathon'} ({activePlan.start_date} → {activePlan.end_date})
+        </div>
+      )}
       <div className="flex flex-wrap gap-2 sm:gap-3">
         {Object.entries(WORKOUT_TYPE_LABELS).map(([key, label]) => (
           <div key={key} className="flex items-center gap-1.5 text-xs">

@@ -68,6 +68,8 @@ export const api = {
   getActivePlan: () => request<any>('/plans/active'),
   createPlan: (data: any) =>
     request<any>('/plans/', { method: 'POST', body: JSON.stringify(data) }),
+  deletePlan: (id: number) =>
+    request<void>(`/plans/${id}`, { method: 'DELETE' }),
 
   // Recovery
   getRecoveryLogs: () => request<any[]>('/recovery/'),

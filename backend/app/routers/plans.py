@@ -26,3 +26,8 @@ def create_plan(plan: schemas.TrainingPlanCreate, db: Session = Depends(get_db))
     db_plan = crud.create_training_plan(db, plan)
     generate_workouts_for_plan(db, db_plan)
     return db_plan
+
+
+@router.delete("/{plan_id}", status_code=204)
+def delete_plan(plan_id: int, db: Session = Depends(get_db)):
+    crud.delete_plan(db, plan_id)

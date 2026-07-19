@@ -13,7 +13,7 @@ export default function Stats() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-6 page-enter">
@@ -27,7 +27,7 @@ export default function Stats() {
           <h2 className="text-lg font-bold flex items-center gap-2">🏃 Running</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatBox label="Total Distance" value={`${running.total_distance}`} unit="km" color="blue" />
-            <StatBox label="Total Runs" value={`${running.total_runs}`} unit="runs" color="emerald" />
+            <StatBox label="Total Runs" value={`${running.total_runs}`} unit="runs" color="indigo" />
             <StatBox label="Total Time" value={`${Math.floor(running.total_running_time / 60)}h ${running.total_running_time % 60}m`} unit="" color="purple" />
             <StatBox label="Longest Run" value={running.longest_run ? `${running.longest_run}` : '—'} unit={running.longest_run ? 'km' : ''} color="orange" />
           </div>
@@ -57,7 +57,7 @@ export default function Stats() {
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                       {pr.category.replace('best_', '').replace(/\b\w/g, l => l.toUpperCase())}
                     </p>
-                    <p className="text-2xl font-bold text-emerald-600">{pr.value} <span className="text-sm">{pr.unit || ''}</span></p>
+                    <p className="text-2xl font-bold text-indigo-600">{pr.value} <span className="text-sm">{pr.unit || ''}</span></p>
                     <p className="text-xs text-gray-400 mt-1">{pr.achieved_at}</p>
                   </div>
                 ))}
@@ -72,7 +72,7 @@ export default function Stats() {
 
 function StatBox({ label, value, unit, color }: { label: string; value: string; unit: string; color: string }) {
   const colorMap: Record<string, string> = {
-    blue: 'text-blue-600 bg-blue-50', emerald: 'text-emerald-600 bg-emerald-50',
+    blue: 'text-blue-600 bg-blue-50', emerald: 'text-indigo-600 bg-indigo-50',
     purple: 'text-purple-600 bg-purple-50', orange: 'text-orange-600 bg-orange-50',
     red: 'text-red-600 bg-red-50', yellow: 'text-yellow-600 bg-yellow-50',
     teal: 'text-teal-600 bg-teal-50', indigo: 'text-indigo-600 bg-indigo-50',

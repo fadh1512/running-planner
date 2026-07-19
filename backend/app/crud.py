@@ -256,6 +256,17 @@ def deactivate_plans(db: Session):
     db.commit()
 
 
+def delete_plan(db: Session, plan_id: int):
+    plan = db.query(models.TrainingPlan).filter(models.TrainingPlan.id == plan_id).first()
+    if not plan:
+        return False
+    # Delete all workouts linked to this plan
+    db.query(models.Workout).filter(models.Workout.plan_id == plan_id).delete()
+    db.delete(plan)
+    db.commit()
+    return True
+
+
 # --- Personal Records ---
 def get_personal_records(db: Session, category: str = None):
     query = db.query(models.PersonalRecord)
@@ -601,6 +612,42 @@ def seed_default_templates(db: Session):
             cooldown="5 min walk + stretches",
             estimated_duration=30,
         ),
+        models.WorkoutTemplate(
+            name="Cross Training - Cycling",
+            category="cross_train",
+            description="Low-impact cardio to maintain fitness while giving joints a break.",
+            warmup="5 min easy spin",
+            main_workout="30-45 min moderate cycling (stationary or outdoor)",
+            cooldown="5 min easy spin + stretches",
+            estimated_duration=45,
+        ),
+        models.WorkoutTemplate(
+            name="Yoga for Runners",
+            category="yoga",
+            description="Flexibility and mobility session targeting hips, hamstrings, and calves.",
+            warmup="3 min breathing exercises",
+            main_workout="30 min yoga flow focusing on runner-specific stretches",
+            cooldown="5 min savasana",
+            estimated_duration=40,
+        ),
+        models.WorkoutTemplate(
+            name="Swim Endurance",
+            category="swim",
+            description="Full-body aerobic workout with zero joint impact.",
+            warmup="200m easy freestyle",
+            main_workout="4x200m at moderate effort with 30s rest between sets",
+            cooldown="100m easy backstroke",
+            estimated_duration=45,
+        ),
+        models.WorkoutTemplate(
+            name="Bike Intervals",
+            category="bike",
+            description="High-intensity cycling intervals for cross-training.",
+            warmup="10 min easy spin",
+            main_workout="5x3 min hard / 2 min easy spin recovery",
+            cooldown="5 min easy spin + stretches",
+            estimated_duration=40,
+        ),
     ]
 
     strength_templates = [
@@ -635,6 +682,30 @@ def seed_default_templates(db: Session):
                 models.StrengthTemplateExercise(exercise_name="Lunges", default_sets=3, default_reps=12),
                 models.StrengthTemplateExercise(exercise_name="Farmer Carry", default_sets=3, default_reps=40, notes="walk 40 meters"),
                 models.StrengthTemplateExercise(exercise_name="Push-ups", default_sets=3, default_reps=15),
+            ],
+        ),
+        models.StrengthTemplate(
+            name="Strength D - Runner's Core",
+            template_type="D",
+            description="Core-focused session for running economy and injury prevention.",
+            exercises=[
+                models.StrengthTemplateExercise(exercise_name="Dead Bug", default_sets=3, default_reps=12),
+                models.StrengthTemplateExercise(exercise_name="Side Plank", default_sets=3, default_reps=30, notes="hold for seconds each side"),
+                models.StrengthTemplateExercise(exercise_name="Glute Bridge", default_sets=3, default_reps=15),
+                models.StrengthTemplateExercise(exercise_name="Calf Raises", default_sets=3, default_reps=20),
+                models.StrengthTemplateExercise(exercise_name="Bird Dog", default_sets=3, default_reps=10),
+            ],
+        ),
+        models.StrengthTemplate(
+            name="Strength E - Upper Body",
+            template_type="E",
+            description="Upper body strength to improve arm drive and posture while running.",
+            exercises=[
+                models.StrengthTemplateExercise(exercise_name="Push-ups", default_sets=4, default_reps=12),
+                models.StrengthTemplateExercise(exercise_name="Pull-ups", default_sets=3, default_reps=8),
+                models.StrengthTemplateExercise(exercise_name="Dumbbell Row", default_sets=3, default_reps=10),
+                models.StrengthTemplateExercise(exercise_name="Overhead Press", default_sets=3, default_reps=10),
+                models.StrengthTemplateExercise(exercise_name="Plank Shoulder Taps", default_sets=3, default_reps=20),
             ],
         ),
     ]

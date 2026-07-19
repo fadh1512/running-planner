@@ -53,14 +53,14 @@ export default function App() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed h-full z-50 w-72 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out
+        className={`fixed h-full z-50 w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-700 flex flex-col transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:static lg:z-auto`}
       >
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6 border-b border-slate-700">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-emerald-700 flex items-center gap-2.5">
-              <span className="text-2xl bg-emerald-100 w-10 h-10 rounded-xl flex items-center justify-center">🏃</span>
+            <h1 className="text-xl font-bold text-white flex items-center gap-2.5">
+              <span className="text-2xl bg-indigo-500/20 w-10 h-10 rounded-xl flex items-center justify-center">🏃</span>
               <div>
                 <span className="block leading-tight">Running</span>
                 <span className="block leading-tight">Planner</span>
@@ -86,12 +86,12 @@ export default function App() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-indigo-500/20 text-white shadow-sm'
+                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
                 }`
               }
             >
-              <span className={`${location.pathname === item.to ? 'text-emerald-600' : 'text-gray-400'}`}>
+              <span className={`${location.pathname === item.to ? 'text-indigo-400' : 'text-slate-400'}`}>
                 {item.icon}
               </span>
               {item.label}
@@ -99,8 +99,8 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
-          <p className="text-xs text-gray-400 text-center">v1.0.0 &middot; Built with ❤️</p>
+        <div className="p-4 border-t border-slate-700">
+          <p className="text-xs text-slate-500 text-center">v1.0.0 &middot; Built with ❤️</p>
         </div>
       </aside>
 
@@ -117,7 +117,7 @@ export default function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
               </svg>
             </button>
-            <h1 className="text-lg font-bold text-emerald-700 flex items-center gap-2">
+            <h1 className="text-lg font-bold text-indigo-600 flex items-center gap-2">
               <span>🏃</span> Running Planner
             </h1>
             <div className="w-10" />

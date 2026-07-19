@@ -54,6 +54,7 @@ class WorkoutBase(BaseModel):
     date: date
     notes: Optional[str] = None
     estimated_duration: Optional[int] = None
+    plan_id: Optional[int] = None
 
 
 class WorkoutCreate(WorkoutBase):
@@ -80,6 +81,7 @@ class WorkoutResponse(WorkoutBase):
     completed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    plan_id: Optional[int] = None
     run_details: Optional[RunDetailResponse] = None
     strength_details: list[StrengthDetailResponse] = []
 

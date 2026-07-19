@@ -6,13 +6,22 @@ import { DashboardStats, Workout, WORKOUT_TYPE_LABELS, WORKOUT_TYPE_COLORS } fro
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activePlan, setActivePlan] = useState<any>(null);
 
   useEffect(() => {
     api.getDashboardStats().then(setStats).finally(() => setLoading(false));
+    api.getActivePlan().then(setActivePlan).catch(() => {});
   }, []);
 
   const handleComplete = async (id: number) => {
     await api.completeWorkout(id);
+    api.getDashboardStats().then(setStats);
+  };
+
+  const handleDeletePlan = async () => {
+    if (!activePlan || !confirm('Delete this training plan and all its workouts from the calendar?')) return;
+    await api.deletePlan(activePlan.id);
+    setActivePlan(null);
     api.getDashboardStats().then(setStats);
   };
 
@@ -30,19 +39,42 @@ export default function Dashboard() {
         <p className="page-subtitle">Your training at a glance</p>
       </div>
 
+      {activePlan && (
+        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg shadow-indigo-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🎯</span>
+              <div>
+                <p className="text-sm font-medium text-indigo-100">Training for</p>
+                <p className="text-xl font-bold">{activePlan.goal === '5k' ? '5K' : activePlan.goal === '10k' ? '10K' : activePlan.goal === 'half_marathon' ? 'Half Marathon' : 'Marathon'}</p>
+                <p className="text-xs text-indigo-200 mt-0.5">{activePlan.start_date} → {activePlan.end_date}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={handleDeletePlan} className="bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-red-200 px-3 py-2 rounded-xl text-sm font-semibold transition-colors">
+                Delete Plan
+              </button>
+              <Link to="/plan-generator" className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
+                View Plan
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Weekly Distance" value={`${stats.weekly_distance}`} unit="km" color="bg-blue-500" icon="🏃" />
         <StatCard label="Strength" value={`${stats.weekly_strength_sessions}`} unit="sessions" color="bg-orange-500" icon="💪" />
         <StatCard label="Streak" value={`${stats.training_streak}`} unit="days" color="bg-red-500" icon="🔥" />
-        <StatCard label="Completion" value={`${completionRate}`} unit="%" color="bg-emerald-500" icon="✅" />
+        <StatCard label="Completion" value={`${completionRate}`} unit="%" color="bg-indigo-500" icon="✅" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Today's Workout */}
         <div className="card">
           <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
             Today's Workout
           </h2>
           {stats.today_workout ? (
@@ -74,11 +106,11 @@ export default function Dashboard() {
       <div className="card">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold text-gray-900">Weekly Progress</h2>
-          <span className="text-sm font-bold text-emerald-600">{completionRate}%</span>
+          <span className="text-sm font-bold text-indigo-600">{completionRate}%</span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
           <div
-            className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-3 rounded-full transition-all duration-700 ease-out"
+            className="bg-gradient-to-r from-indigo-500 to-indigo-400 h-3 rounded-full transition-all duration-700 ease-out"
             style={{ width: `${completionRate}%` }}
           />
         </div>
@@ -102,7 +134,7 @@ export default function Dashboard() {
                   </p>
                   <p className="text-xs text-gray-500">{pr.achieved_at}</p>
                 </div>
-                <span className="text-sm font-bold text-emerald-600">
+                <span className="text-sm font-bold text-indigo-600">
                   {pr.value} {pr.unit || ''}
                 </span>
               </div>
@@ -161,7 +193,7 @@ function WorkoutCard({ workout, onComplete }: { workout: Workout; onComplete?: (
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
           {workout.completed ? (
-            <span className="inline-flex items-center gap-1 badge bg-emerald-100 text-emerald-700">
+            <span className="inline-flex items-center gap-1 badge bg-indigo-100 text-indigo-700">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
               Done
             </span>
@@ -184,7 +216,7 @@ function EmptyState({ emoji, text, link }: { emoji: string; text: string; link?:
       <p className="text-4xl mb-3">{emoji}</p>
       <p className="text-sm text-gray-500 font-medium">{text}</p>
       {link && (
-        <Link to={link.to} className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold mt-2 inline-block hover:underline">
+        <Link to={link.to} className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold mt-2 inline-block hover:underline">
           {link.label} &rarr;
         </Link>
       )}
@@ -195,7 +227,7 @@ function EmptyState({ emoji, text, link }: { emoji: string; text: string; link?:
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
     </div>
   );
 }

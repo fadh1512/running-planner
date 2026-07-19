@@ -9,6 +9,7 @@ export interface Workout {
   estimated_duration: number | null;
   created_at: string;
   updated_at: string;
+  plan_id: number | null;
   run_details: RunDetail | null;
   strength_details: StrengthDetail[];
 }
@@ -142,6 +143,10 @@ export const WORKOUT_TYPE_LABELS: Record<string, string> = {
   strength_b: 'Strength B',
   strength_c: 'Strength C',
   rest_day: 'Rest Day',
+  cross_train: 'Cross Training',
+  yoga: 'Yoga',
+  swim: 'Swimming',
+  bike: 'Cycling',
   custom: 'Custom',
 };
 
@@ -157,6 +162,10 @@ export const WORKOUT_TYPE_COLORS: Record<string, string> = {
   strength_b: '#f97316',
   strength_c: '#eab308',
   rest_day: '#9ca3af',
+  cross_train: '#8b5cf6',
+  yoga: '#06b6d4',
+  swim: '#3b82f6',
+  bike: '#f97316',
   custom: '#6b7280',
 };
 

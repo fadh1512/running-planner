@@ -123,6 +123,7 @@ def _create_workout_for_day(db, plan, workout_date, workout_type, week_num,
             workout_type="rest_day",
             date=workout_date,
             estimated_duration=0,
+            plan_id=plan.id,
         )
 
     if workout_type.startswith("strength"):
@@ -132,6 +133,7 @@ def _create_workout_for_day(db, plan, workout_date, workout_type, week_num,
             workout_type=workout_type,
             date=workout_date,
             estimated_duration=duration,
+            plan_id=plan.id,
         )
 
     distance = None
@@ -201,6 +203,8 @@ def _create_workout_for_day(db, plan, workout_date, workout_type, week_num,
         date=workout_date,
         estimated_duration=duration,
     )
+
+    workout.plan_id = plan.id
 
     workout.run_details = models.RunDetail(
         distance=distance,

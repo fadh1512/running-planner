@@ -13,7 +13,7 @@ export default function Progress() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" /></div>;
 
   const completedRuns = workouts.filter(w => w.completed && w.run_details?.distance);
   const totalDistance = completedRuns.reduce((sum, w) => sum + (w.run_details?.distance || 0), 0);
@@ -41,7 +41,7 @@ export default function Progress() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <SummaryCard value={`${Math.round(totalDistance * 10) / 10}`} label="Total km" color="text-blue-600 bg-blue-50" />
-        <SummaryCard value={completedRuns.length.toString()} label="Runs Done" color="text-emerald-600 bg-emerald-50" />
+        <SummaryCard value={completedRuns.length.toString()} label="Runs Done" color="text-indigo-600 bg-indigo-50" />
         <SummaryCard value={completedStrength.length.toString()} label="Strength" color="text-orange-600 bg-orange-50" />
         <SummaryCard value={records.length.toString()} label="PRs" color="text-purple-600 bg-purple-50" />
       </div>
@@ -73,7 +73,7 @@ export default function Progress() {
           {workouts.slice(0, 10).map(w => (
             <div key={w.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-3 min-w-0">
-                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${w.completed ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${w.completed ? 'bg-indigo-500' : 'bg-gray-300'}`} />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-800 truncate">{w.title}</p>
                   <p className="text-xs text-gray-500">{WORKOUT_TYPE_LABELS[w.workout_type] || w.workout_type} &middot; {w.date}</p>
@@ -101,7 +101,7 @@ export default function Progress() {
                   <p className="text-sm font-bold text-gray-800">{pr.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{pr.achieved_at}</p>
                 </div>
-                <span className="text-lg font-bold text-emerald-600">{pr.value} <span className="text-sm font-medium">{pr.unit || ''}</span></span>
+                <span className="text-lg font-bold text-indigo-600">{pr.value} <span className="text-sm font-medium">{pr.unit || ''}</span></span>
               </div>
             ))}
           </div>

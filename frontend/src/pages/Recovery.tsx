@@ -10,7 +10,7 @@ export default function Recovery() {
   const load = () => { api.getRecoveryLogs().then(setLogs).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []);
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-6 page-enter">
@@ -72,8 +72,8 @@ export default function Recovery() {
 
 function RecoveryScoreDisplay({ score }: { score: number | null }) {
   if (score === null) return <p className="text-gray-400">No data</p>;
-  const color = score >= 70 ? 'from-emerald-500 to-emerald-400' : score >= 40 ? 'from-yellow-500 to-yellow-400' : 'from-red-500 to-red-400';
-  const textColor = score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-yellow-600' : 'text-red-600';
+  const color = score >= 70 ? 'from-indigo-500 to-indigo-400' : score >= 40 ? 'from-yellow-500 to-yellow-400' : 'from-red-500 to-red-400';
+  const textColor = score >= 70 ? 'text-indigo-600' : score >= 40 ? 'text-yellow-600' : 'text-red-600';
   const label = score >= 70 ? 'Ready for hard training' : score >= 40 ? 'Consider easy training or rest' : 'Rest day recommended';
 
   return (
@@ -88,7 +88,7 @@ function RecoveryScoreDisplay({ score }: { score: number | null }) {
 
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <span className="text-gray-400 text-sm">—</span>;
-  const c = score >= 70 ? 'text-emerald-700 bg-emerald-100' : score >= 40 ? 'text-yellow-700 bg-yellow-100' : 'text-red-700 bg-red-100';
+  const c = score >= 70 ? 'text-indigo-700 bg-indigo-100' : score >= 40 ? 'text-yellow-700 bg-yellow-100' : 'text-red-700 bg-red-100';
   return <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${c}`}>{Math.round(score)}%</span>;
 }
 
@@ -148,7 +148,7 @@ function RecoveryForm({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 
 function SliderField({ label, icon, value, onChange }: { label: string; icon: string; value: string; onChange: (v: string) => void }) {
   const numVal = parseInt(value);
-  const color = numVal >= 7 ? 'text-emerald-600' : numVal >= 4 ? 'text-yellow-600' : 'text-red-600';
+  const color = numVal >= 7 ? 'text-indigo-600' : numVal >= 4 ? 'text-yellow-600' : 'text-red-600';
   return (
     <div>
       <label className="label flex items-center justify-between">
@@ -156,7 +156,7 @@ function SliderField({ label, icon, value, onChange }: { label: string; icon: st
         <span className={`font-bold ${color}`}>{value}/10</span>
       </label>
       <input type="range" min="1" max="10" value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
+        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
       <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-medium"><span>1 - Low</span><span>10 - High</span></div>
     </div>
   );
